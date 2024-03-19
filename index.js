@@ -1,3 +1,4 @@
+require('dotenv').config();
 const express = require('express');
 const morgan = require('morgan');
 const cors = require('cors');
@@ -36,7 +37,7 @@ app.get('/info', (req, res) => {
     });
 });
 
-app.post('/api/persons', (req, res) => {
+app.post('/api/persons', (req, res, next) => {
     const body = req.body;
     if (!body.name || !body.number) {
         return res.status(400).json({
@@ -56,7 +57,7 @@ app.post('/api/persons', (req, res) => {
         });
         newPerson.save().then(savedPerson => {
             res.json(savedPerson);
-        });
+        }).catch(error => next(error));
 
     });
     
@@ -67,11 +68,46 @@ app.delete('/api/persons/:id', (req, res) => {
     Person.findByIdAndDelete(req.params.id).then(result => {
         if (result) {
             return res.status(204).end();
-        } else {
-            return res.status(404).json({ error: 'person not found' });
         }
-    });
+    }).catch(error => next(error));
 });
+
+app.put('/api/persons/:id', (req, res, next) => {
+    const body = req.body;
+    const person = {
+        name: body.name,
+        number: body.number
+    };
+    Person.findByIdAndUpdate(
+        req.params.id, 
+        person,
+        { new: true, runValidators: true, context: 'query'}
+    ).then(updatedPerson => {
+            res.json(updatedPerson);
+        }).catch(error => next(error));
+});
+
+// debe estar el penúltimo middleware cargado
+const unknownEndpoint = (request, response) => {
+  response.status(404).send({ error: 'unknown endpoint' })
+}
+
+app.use(unknownEndpoint)
+
+const errorHandler = (error, request, response, next) => {
+  console.error(error.message)
+
+  if (error.name === 'CastError') {
+    return response.status(400).send({ error: 'malformatted id' })
+  } else if (error.name === 'ValidationError') {
+    return response.status(400).json({ error: error.message })
+  }
+
+  next(error)
+}
+
+// este debe ser el último middleware cargado
+app.use(errorHandler)
 
 
 // Running the server...
