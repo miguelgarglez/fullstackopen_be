@@ -1,3 +1,4 @@
+/* eslint-disable no-undef */
 require('dotenv').config();
 const express = require('express');
 const morgan = require('morgan');
@@ -11,9 +12,9 @@ app.use(cors());
 app.use(express.static('dist'));
 
 app.use(express.json());
-morgan.token('content', function (req, res) { return JSON.stringify(req.body) })
-app.use(morgan('tiny', { skip: function (req, res) { return req.method === 'POST' } }));
-app.use(morgan(':method :url :status :res[content-length] - :response-time ms :content', { skip: function (req, res) { return req.method !== 'POST' } }));
+morgan.token('content', function (req) { return JSON.stringify(req.body) })
+app.use(morgan('tiny', { skip: function (req) { return req.method === 'POST' } }));
+app.use(morgan(':method :url :status :res[content-length] - :response-time ms :content', { skip: function (req) { return req.method !== 'POST' } }));
 
 app.get('/', (req, res) => {
     res.send('<h1>Hello World</h1>');

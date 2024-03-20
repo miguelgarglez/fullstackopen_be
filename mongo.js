@@ -1,4 +1,5 @@
 const mongoose = require('mongoose')
+const process = require('process');
 
 if (process.argv.length<3) {
   console.log('give password or content of person as arguments')
@@ -37,7 +38,7 @@ if (name !== null && number !== null) {
     number: number,
   })
 
-  person.save().then(result => {
+  person.save().then(() => {
     console.log(`added ${name} number ${number} to phonebook`)
     mongoose.connection.close()
   })
